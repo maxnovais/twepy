@@ -1,8 +1,8 @@
-# twepy
+# TWEPY - Twitter & Elasticsearch in Python
 Twitter &amp; Elasticsearch interface in Python
 
 
-## How to Use
+# How to Use
 
 ### Create virtualenv
 Create and run Python3 Virtualenv:
