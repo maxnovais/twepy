@@ -3,7 +3,7 @@
 ELASTICSEARCH = {
     'host': '',
     'port': '',
-    'index': 'twitter',
+    'index': 'social',
 }
 
 TWITTER_API = {
