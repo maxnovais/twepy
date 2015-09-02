@@ -5,7 +5,7 @@ import uuid
 import sys
 from datetime import datetime
 from twitter import TwitterStream, OAuth
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, client
 from config import ELASTICSEARCH, TWITTER_API
 
 
@@ -47,22 +47,51 @@ def contains_in_list(list):
         return True
 
 
-def send_to_es(body):
-    es = Elasticsearch([{'host': ELASTICSEARCH['host'], 'port': int(ELASTICSEARCH['port'])}])
+def connect_to_es():
+    search = Elasticsearch([{'host': ELASTICSEARCH['host'], 'port': int(ELASTICSEARCH['port'])}])
     session = requests.Session()
-    r = session.get('http://{}:{}'.format(ELASTICSEARCH['host'], ELASTICSEARCH['port']))
-    if r.status_code == 200:
-        es.create(index=ELASTICSEARCH['index'], doc_type=ELASTICSEARCH['doc_type'], id=uuid.uuid4().hex, body=body)
-        sys.stdout.write('.')
+    try:
+        request = session.get('http://{}:{}'.format(ELASTICSEARCH['host'], ELASTICSEARCH['port']))
+        if request.status_code == 200:
+            return search
+        else:
+            return False
+    except:
+        return False
+
+
+def send_to_es(body):
+    connect = connect_to_es()
+    if connect:
+        connect.create(index=ELASTICSEARCH['index'], doc_type=ELASTICSEARCH['doc_type'], id=uuid.uuid4().hex, body=body)
     else:
         sys.stdout.write('E')
     sys.stdout.flush()
+
+
+def template_es():
+    # This function put mapping for create data structure
+    print('Create mapping for Elasticsearch')
+    connect = connect_to_es()
+    interface = client.IndicesClient(connect)
+    if connect:
+        body = '{"order":0,"template":"*","settings":{},"mappings":{"_default_":{"dynamic_templates":[' \
+                      '{"string_fields":{"mapping":{"index":"analyzed","type":"string","fields":{"raw":{' \
+                      '"index":"not_analyzed","type":"string"}}},"match_mapping_type":"string","match":"*"}}]'\
+                      ',"_all":{"enabled":true}}},"aliases":{}}'
+        template = interface.exists_template(ELASTICSEARCH['template'],)
+        if template:
+            print('Mapping existis, using it.')
+        else:
+            print('Creating map for use!')
+            interface.put_template(name=ELASTICSEARCH['template'], body=body)
 
 
 if __name__ == '__main__':
     print('TWEPY - Twitter to Elasticsearch Interface with Python')
     stream = TwitterStream(auth=auth())
     tweet_iter = stream.statuses.sample()
+    template_es()
 
     for tweet in tweet_iter:
         if 'delete' in tweet.keys():
