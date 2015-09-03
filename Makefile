@@ -6,6 +6,8 @@ clean:
 
 deps:
 	pip install -r requirements.txt
+
+config:
 	cp app/config.py.example app/config.py
 
 up:
