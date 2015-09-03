@@ -1,9 +1,11 @@
 # coding: utf-8
 
 ELASTICSEARCH = {
-    'host': '',
-    'port': '',
+    'host': 'localhost',
+    'port': '9200',
     'index': 'social',
+    'doc_type': 'twitter',
+    'template': 'twepy',
 }
 
 TWITTER_API = {
